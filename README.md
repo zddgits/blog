@@ -76,11 +76,25 @@ npm run build
    wrangler login
    ```
 
-3. 部署
+3. 部署（一键构建+部署）
    ```bash
-   wrangler pages project create your-blog-name
-   wrangler pages deploy dist
+   # 首次部署时会创建项目，之后会自动更新
+   npm run deploy
    ```
+
+或者手动分步操作：
+```bash
+# 先构建项目
+npm run build
+
+# 创建项目（仅首次）
+npx wrangler pages project create your-blog-name
+
+# 部署到 Cloudflare Pages
+npx wrangler pages deploy dist
+```
+
+> **注意**：`npx wrangler deploy` 是用于部署 Cloudflare Workers 的，我们的项目是静态网站，所以使用 `wrangler pages deploy dist` 来部署到 Cloudflare Pages。
 
 ## 使用说明
 

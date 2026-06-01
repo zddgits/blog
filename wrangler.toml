@@ -1,0 +1,11 @@
+# Cloudflare Pages 项目配置
+# 更多信息：https://developers.cloudflare.com/pages/
+
+# 项目名称（在部署时会使用）
+name = "personal-blog"
+
+# 构建输出目录
+build_output_dir = "dist"
+
+# 构建命令
+build_command = "npm run build"
