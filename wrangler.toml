@@ -2,7 +2,7 @@
 # 更多信息：https://developers.cloudflare.com/pages/platform/
 
 # 项目名称
-name = "personal-blog"
+name = "blog"
 
 # Pages 项目的资产目录配置
 compatibility_date = "2026-06-01"
