@@ -53,7 +53,7 @@ npm run build
 
 ## Cloudflare Pages 部署
 
-### 方法 1：通过 GitHub 仓库部署（推荐）
+### 方法：通过 GitHub 仓库部署（推荐）
 
 1. 将代码推送到 GitHub 仓库
 2. 访问 [Cloudflare Pages](https://pages.cloudflare.com/)
@@ -64,37 +64,7 @@ npm run build
    - 构建输出目录：`dist`
 6. 点击 "Save and Deploy"
 
-### 方法 2：使用 Wrangler CLI 部署
-
-1. 安装 Wrangler
-   ```bash
-   npm install -g wrangler
-   ```
-
-2. 登录 Cloudflare
-   ```bash
-   wrangler login
-   ```
-
-3. 部署（一键构建+部署）
-   ```bash
-   # 首次部署时会创建项目，之后会自动更新
-   npm run deploy
-   ```
-
-或者手动分步操作：
-```bash
-# 先构建项目
-npm run build
-
-# 创建项目（仅首次）
-npx wrangler pages project create your-blog-name
-
-# 部署到 Cloudflare Pages
-npx wrangler pages deploy dist
-```
-
-> **注意**：`npx wrangler deploy` 是用于部署 Cloudflare Workers 的，我们的项目是静态网站，所以使用 `wrangler pages deploy dist` 来部署到 Cloudflare Pages。
+部署完成后，你的博客就可以在线访问了！以后每次推送到 GitHub，Cloudflare Pages 都会自动重新部署。
 
 ## 使用说明
 

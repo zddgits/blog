@@ -1,11 +1,12 @@
 # Cloudflare Pages 项目配置
-# 更多信息：https://developers.cloudflare.com/pages/
+# 更多信息：https://developers.cloudflare.com/pages/platform/
 
-# 项目名称（在部署时会使用）
+# 项目名称
 name = "personal-blog"
 
-# 构建输出目录
-build_output_dir = "dist"
+# Pages 项目的资产目录配置
+compatibility_date = "2026-06-01"
 
-# 构建命令
-build_command = "npm run build"
+[assets]
+directory = "./dist"
+
