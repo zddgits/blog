@@ -1,13 +1,15 @@
 import { create } from 'zustand';
 import { BlogPost } from '@/types';
+import { getPosts, createPost, updatePost, deletePost, isLoggedIn as apiIsLoggedIn, logout as apiLogout } from '@/lib/api';
 
 interface BlogStore {
   posts: BlogPost[];
   isLoggedIn: boolean;
-  setPosts: (posts: BlogPost[]) => void;
-  addPost: (post: BlogPost) => void;
-  updatePost: (slug: string, post: BlogPost) => void;
-  deletePost: (slug: string) => void;
+  loading: boolean;
+  loadPosts: () => Promise<void>;
+  addPost: (post: BlogPost) => Promise<boolean>;
+  updatePost: (slug: string, post: BlogPost) => Promise<boolean>;
+  deletePost: (slug: string) => Promise<boolean>;
   login: () => void;
   logout: () => void;
 }
@@ -23,48 +25,78 @@ const initialPosts: BlogPost[] = [
   },
 ];
 
-export const useBlogStore = create<BlogStore>((set) => {
-  const savedPosts = localStorage.getItem('blog_posts');
-  const savedLogin = localStorage.getItem('blog_logged_in');
+export const useBlogStore = create<BlogStore>((set) => ({
+  posts: initialPosts,
+  isLoggedIn: apiIsLoggedIn(),
+  loading: false,
 
-  return {
-    posts: savedPosts ? JSON.parse(savedPosts) : initialPosts,
-    isLoggedIn: savedLogin === 'true',
+  loadPosts: async () => {
+    set({ loading: true });
+    try {
+      const posts = await getPosts();
+      if (posts.length > 0) {
+        set({ posts });
+      }
+    } catch (error) {
+      console.error('Failed to load posts:', error);
+    }
+    set({ loading: false });
+  },
 
-    setPosts: (posts) => {
-      localStorage.setItem('blog_posts', JSON.stringify(posts));
-      set({ posts });
-    },
+  addPost: async (post) => {
+    try {
+      const success = await createPost({
+        title: post.title,
+        description: post.description,
+        content: post.content,
+        date: post.date,
+        tags: post.tags,
+      });
+      if (success) {
+        await useBlogStore.getState().loadPosts();
+      }
+      return success;
+    } catch {
+      return false;
+    }
+  },
 
-    addPost: (post) =>
-      set((state) => {
-        const newPosts = [post, ...state.posts];
-        localStorage.setItem('blog_posts', JSON.stringify(newPosts));
-        return { posts: newPosts };
-      }),
+  updatePost: async (slug, post) => {
+    try {
+      const success = await updatePost(slug, {
+        title: post.title,
+        description: post.description,
+        content: post.content,
+        date: post.date,
+        tags: post.tags,
+      });
+      if (success) {
+        await useBlogStore.getState().loadPosts();
+      }
+      return success;
+    } catch {
+      return false;
+    }
+  },
 
-    updatePost: (slug, post) =>
-      set((state) => {
-        const newPosts = state.posts.map((p) => (p.slug === slug ? post : p));
-        localStorage.setItem('blog_posts', JSON.stringify(newPosts));
-        return { posts: newPosts };
-      }),
+  deletePost: async (slug) => {
+    try {
+      const success = await deletePost(slug);
+      if (success) {
+        await useBlogStore.getState().loadPosts();
+      }
+      return success;
+    } catch {
+      return false;
+    }
+  },
 
-    deletePost: (slug) =>
-      set((state) => {
-        const newPosts = state.posts.filter((p) => p.slug !== slug);
-        localStorage.setItem('blog_posts', JSON.stringify(newPosts));
-        return { posts: newPosts };
-      }),
+  login: () => {
+    set({ isLoggedIn: true });
+  },
 
-    login: () => {
-      localStorage.setItem('blog_logged_in', 'true');
-      set({ isLoggedIn: true });
-    },
-
-    logout: () => {
-      localStorage.setItem('blog_logged_in', 'false');
-      set({ isLoggedIn: false });
-    },
-  };
-});
+  logout: () => {
+    apiLogout();
+    set({ isLoggedIn: false });
+  },
+}));

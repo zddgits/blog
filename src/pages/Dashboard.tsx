@@ -1,23 +1,32 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Calendar, Eye } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar, Eye, RefreshCw } from 'lucide-react';
 import { useBlogStore } from '@/store/useBlogStore';
 import { Navbar } from '@/components/Navbar';
 
 export function Dashboard() {
-  const { posts, isLoggedIn, deletePost } = useBlogStore();
+  const { posts, isLoggedIn, deletePost, loadPosts, loading } = useBlogStore();
   const navigate = useNavigate();
+  const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoggedIn) {
       navigate('/admin/login');
+    } else {
+      loadPosts();
     }
-  }, [isLoggedIn, navigate]);
+  }, [isLoggedIn, navigate, loadPosts]);
 
-  const handleDelete = (slug: string) => {
-    if (confirm('确定要删除这篇文章吗？')) {
-      deletePost(slug);
-    }
+  const handleDelete = async (slug: string) => {
+    if (!confirm('确定要删除这篇文章吗？')) return;
+    
+    setDeletingSlug(slug);
+    await deletePost(slug);
+    setDeletingSlug(null);
+  };
+
+  const handleRefresh = () => {
+    loadPosts();
   };
 
   if (!isLoggedIn) {
@@ -33,13 +42,23 @@ export function Dashboard() {
             <h1 className="text-3xl font-bold text-white mb-2">文章管理</h1>
             <p className="text-zinc-400">管理你的所有博客文章</p>
           </div>
-          <Link
-            to="/admin/editor/new"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-xl transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            新建文章
-          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleRefresh}
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={loading ? 'w-5 h-5 animate-spin' : 'w-5 h-5'} />
+              刷新
+            </button>
+            <Link
+              to="/admin/editor/new"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-xl transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              新建文章
+            </Link>
+          </div>
         </div>
 
         {posts.length === 0 ? (
@@ -92,7 +111,8 @@ export function Dashboard() {
                     </Link>
                     <button
                       onClick={() => handleDelete(post.slug)}
-                      className="p-2 text-zinc-400 hover:text-red-400 hover:bg-zinc-700 rounded-lg transition-colors"
+                      disabled={deletingSlug === post.slug}
+                      className="p-2 text-zinc-400 hover:text-red-400 hover:bg-zinc-700 rounded-lg transition-colors disabled:opacity-50"
                       title="删除"
                     >
                       <Trash2 className="w-5 h-5" />

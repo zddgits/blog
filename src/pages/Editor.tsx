@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Check } from 'lucide-react';
 import { useBlogStore } from '@/store/useBlogStore';
 import { Navbar } from '@/components/Navbar';
 import { BlogPost } from '@/types';
@@ -19,6 +19,8 @@ export function Editor() {
     content: '',
     tags: ''
   });
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -41,12 +43,20 @@ export function Editor() {
     }
   }, [slug, posts, isNew]);
 
+  useEffect(() => {
+    if (saved) {
+      const timer = setTimeout(() => setSaved(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [saved]);
+
   if (!isLoggedIn) {
     return null;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
 
     const newSlug = isNew
       ? formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
@@ -61,13 +71,21 @@ export function Editor() {
       tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : undefined
     };
 
+    let success = false;
     if (isNew) {
-      addPost(postData);
+      success = await addPost(postData);
     } else {
-      updatePost(slug!, postData);
+      success = await updatePost(slug!, postData);
     }
 
-    navigate('/admin/dashboard');
+    setSaving(false);
+    
+    if (success) {
+      setSaved(true);
+      if (!isNew) {
+        navigate('/admin/dashboard');
+      }
+    }
   };
 
   return (
@@ -90,10 +108,26 @@ export function Editor() {
           <button
             form="editor-form"
             type="submit"
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-xl transition-colors"
+            disabled={saving}
+            className={cn(
+              'inline-flex items-center gap-2 px-6 py-2.5 font-medium rounded-xl transition-all',
+              saved
+                ? 'bg-green-500 text-white'
+                : 'bg-primary-500 hover:bg-primary-600 text-white',
+              'disabled:opacity-50 disabled:cursor-not-allowed'
+            )}
           >
-            <Save className="w-5 h-5" />
-            保存
+            {saved ? (
+              <>
+                <Check className="w-5 h-5" />
+                已保存
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5" />
+                {saving ? '保存中...' : '保存'}
+              </>
+            )}
           </button>
         </div>
 
@@ -274,4 +308,8 @@ console.log('Hello World');
       </main>
     </div>
   );
+}
+
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ');
 }
